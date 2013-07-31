@@ -2426,3 +2426,55 @@ JSBool jsval_to_FontDefinition( JSContext *cx, jsval vp, FontDefinition *out )
     // we are done here
 	return JS_TRUE;
 }
+void _JS_TinyXMLLoad2Object(JSContext *cx,JSObject* obj,const tinyxml2::XMLElement * element){
+	using namespace tinyxml2;
+	//if(element == NULL)
+	//	return 0;
+	jsval val;
+	{
+		std::string v = std::string(element->Name());
+		val=std_string_to_jsval(cx,v);
+		JS_SetProperty(cx,obj,"Name",&val);
+	}
+	JSObject* objattr= JS_NewArrayObject(cx, 0,NULL);
+	val=OBJECT_TO_JSVAL(objattr);
+	JS_SetProperty(cx,obj,"Attributes",&val);
+	for(const XMLAttribute * a = element->FirstAttribute();a;a=a->Next())
+	{
+		std::string v = std::string(a->Value());
+		val=std_string_to_jsval(cx,v);
+		JS_SetProperty(cx,objattr,a->Name(),&val);
+	}
+	if(element->FirstChildElement()==NULL)
+		return;
+
+	JSObject* objarray = JS_NewArrayObject(cx, 0,NULL);
+	val=OBJECT_TO_JSVAL(objarray);
+	JS_SetProperty(cx,obj,"Childs",&val);
+	int i=0;
+	for(const XMLElement * e =element->FirstChildElement();e;e=e->NextSiblingElement(),i++)
+	{
+		JSObject* newobj = JS_NewObject(cx,NULL,NULL,objarray);
+		val = OBJECT_TO_JSVAL(newobj);
+		JS_SetElement(cx,objarray,i,&val);
+		_JS_TinyXMLLoad2Object(cx,newobj,e);
+	}
+
+}
+int JS_TinyXMLLoad2Object(JSContext *cx,const char* filename,JSObject*& obj){
+	obj=NULL;
+	using namespace tinyxml2;
+	tinyxml2::XMLDocument doc;
+	XMLError error;
+
+	std::string fullpath = cocos2d::CCFileUtils::sharedFileUtils()->fullPathForFilename(filename);
+
+	if(XML_NO_ERROR != (error=doc.LoadFile(fullpath.c_str())))
+		return error;
+
+	obj = JS_NewObject(cx,NULL,NULL,NULL);
+
+	_JS_TinyXMLLoad2Object(cx,obj,doc.RootElement());
+
+	return XML_NO_ERROR;
+}

@@ -254,6 +254,7 @@ JSBool JSBDebug_BufferWrite(JSContext* cx, unsigned argc, jsval* vp);
 JSBool JSBDebug_LockExecution(JSContext* cx, unsigned argc, jsval* vp);
 JSBool JSBDebug_UnlockExecution(JSContext* cx, unsigned argc, jsval* vp);
 
+int JS_TinyXMLLoad2Object(JSContext *cx,const char* filename,JSObject*& obj);
 // just a simple utility to avoid mem leaking when using JSString
 class JSStringWrapper
 {
